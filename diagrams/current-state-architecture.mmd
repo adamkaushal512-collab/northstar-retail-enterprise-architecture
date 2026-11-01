@@ -1,0 +1,26 @@
+flowchart TB
+    EC["E-commerce Storefront"]
+    OMS["Order Management System"]
+    OIV["Online Inventory View"]
+    POS["Point of Sale"]
+    SI["Store Inventory"]
+    WMS["Warehouse Management System"]
+    SF["Store Fulfillment"]
+
+    EC -->|"INT-003: Order requests"| OMS
+    OMS -->|"INT-004: Availability lookup"| OIV
+    POS -->|"INT-001: Stock updates"| SI
+    SI -->|"INT-002: Periodic synchronization"| OIV
+
+    WMS -.->|"INT-005: Candidate integration"| SI
+    OMS -.->|"INT-006: Candidate fulfillment flow"| SF
+
+    GAP["GAP-001: Missing unified cross-channel reservation ownership"]
+    GAP -.- OMS
+    GAP -.- SI
+
+    classDef existing fill:#dbeafe,stroke:#2563eb,color:#172554
+    classDef gap fill:#fef3c7,stroke:#b45309,color:#78350f
+
+    class EC,OMS,OIV,POS,SI,WMS,SF existing
+    class GAP gap
