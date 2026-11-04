@@ -1,0 +1,37 @@
+sequenceDiagram
+    autonumber
+    actor Customer
+    participant EC as E-commerce
+    participant OMS as Order Management
+    participant RS as Reservation Service
+    participant DB as Authoritative Inventory Store
+    participant EP as Event Publisher
+    participant EV as Event Distribution
+    participant OIV as Online Inventory View
+
+    Customer->>EC: Place order
+    EC->>OMS: Submit order request
+    OMS->>RS: Reserve inventory (idempotency key)
+    RS->>DB: Atomic allocation + reservation + outbox record
+
+    alt Inventory available
+        DB-->>RS: Transaction committed
+        RS-->>OMS: Reservation confirmed
+        OMS-->>EC: Order accepted
+        EC-->>Customer: Confirmation
+        EP->>DB: Read pending outbox event
+        DB-->>EP: InventoryReserved event
+        EP->>EV: Publish event
+        EV-->>EP: Publication acknowledged
+        EP->>DB: Mark event published
+        EV->>OIV: Deliver InventoryReserved
+        OIV-->>EV: Processing acknowledged
+    else Insufficient inventory
+        DB-->>RS: Allocation rejected
+        RS-->>OMS: Insufficient inventory
+        OMS-->>EC: Order cannot be fulfilled
+        EC-->>Customer: Display unavailable
+    end
+
+    Note over RS,DB: Atomic transaction prevents conflicting allocations
+    Note over EP,OIV: Delivery may be repeated; consumers must be idempotent

@@ -1,0 +1,35 @@
+flowchart TB
+    EC["E-commerce Storefront"]
+    POS["Store POS"]
+    API["API / Integration Layer"]
+    OMS["Order Management System"]
+    RS["Inventory Reservation Service"]
+    DB[("Authoritative Inventory State")]
+    OUT["Reliable Event Publication"]
+    EV["Event Distribution"]
+    OIV["Online Inventory View"]
+    SF["Store Fulfillment"]
+    WMS["Warehouse Management System"]
+    AN["Analytics / Reporting"]
+
+    EC --> API
+    POS --> API
+    API --> OMS
+    OMS -->|"Synchronous reservation request"| RS
+    RS -->|"Atomic allocation"| DB
+    RS -->|"Committed change"| OUT
+    OUT --> EV
+    EV --> OIV
+    EV --> SF
+    EV --> AN
+
+    WMS -.->|"Integration to be designed"| API
+    POS -.->|"Offline reconciliation to be designed"| RS
+
+    classDef core fill:#dbeafe,stroke:#2563eb,color:#172554
+    classDef data fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef integration fill:#fef3c7,stroke:#d97706,color:#78350f
+
+    class EC,POS,API,OMS,RS,SF,WMS core
+    class DB data
+    class OUT,EV,OIV,AN integration
