@@ -1,0 +1,47 @@
+flowchart TD
+    A["OMS: Create Reservation"] --> B["Reservation Service"]
+    B --> C{"Request authenticated and valid?"}
+
+    C -->|No| D["Return 400, 401, or 403"]
+    C -->|Yes| E["Check idempotency and inventory"]
+
+    E --> F{"Existing completed request?"}
+    F -->|Yes| G["Return previous reservation result"]
+    F -->|No| H["DynamoDB atomic transaction"]
+
+    H --> I{"Transaction committed?"}
+    I -->|No: Inventory conflict| J["Return 409 Conflict"]
+    I -->|No: Transient failure| K["Return retryable error"]
+    I -->|Yes| L["Reservation and outbox committed"]
+
+    L --> M["Return 201 Created"]
+    L --> N["Durable Outbox Publisher"]
+
+    N --> O{"EventBridge publish successful?"}
+    O -->|No| P["Retry and recover pending publication"]
+    P --> N
+    O -->|Yes| Q["EventBridge"]
+
+    Q --> R["Inventory View SQS"]
+    Q --> S["Fulfillment SQS"]
+    Q --> T["Analytics SQS"]
+
+    S --> U["Fulfillment Consumer"]
+    U --> V{"Message processed successfully?"}
+    V -->|Yes| W["Acknowledge message"]
+    V -->|No| X["Retry according to SQS policy"]
+    X --> Y{"Maximum receives exceeded?"}
+    Y -->|No| S
+    Y -->|Yes| Z["Fulfillment DLQ"]
+
+    Z --> AA["Alert and investigate"]
+    AA --> AB["Fix issue and safely redrive"]
+    AB --> S
+
+    K --> AC["OMS: Bounded backoff and jitter"]
+    AC --> AD["Retry with same idempotency key"]
+    AD --> B
+
+    M -.-> AE["Response may be lost"]
+    AE --> AF["OMS: Outcome unknown"]
+    AF --> AD

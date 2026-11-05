@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.northstar.example/inventory-reserved/1.0",
+  "title": "NorthStar Retail InventoryReserved Event",
+  "description": "Business event emitted after an inventory reservation commits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "eventType",
+    "eventVersion",
+    "occurredAt",
+    "data"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "eventType": {
+      "const": "InventoryReserved"
+    },
+    "eventVersion": {
+      "const": "1.0"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reservationId",
+        "orderId",
+        "storeId",
+        "sku",
+        "quantity"
+      ],
+      "properties": {
+        "reservationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "orderId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "storeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sku": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}
