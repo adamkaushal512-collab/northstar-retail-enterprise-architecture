@@ -1,0 +1,61 @@
+flowchart TB
+    OMS["Order Management System (OMS)"]
+
+    subgraph AWS["AWS Cloud — NorthStar Retail"]
+        subgraph VPC["VPC — Multi-AZ Private Application Network"]
+            ALB["Internal Application Load Balancer<br/>TLS and Security Groups"]
+            ECS["ECS Fargate<br/>Inventory Reservation Service<br/>Task Role and API Authorization"]
+            DDB[("DynamoDB<br/>Inventory, Reservations,<br/>Idempotency, Outbox")]
+            PUB["Outbox Publisher<br/>Dedicated IAM Role"]
+        end
+
+        EB["Amazon EventBridge<br/>Restricted PutEvents Permissions"]
+        SQS["Amazon SQS<br/>Queue Policy and Encryption"]
+        CON["Fulfillment Consumer<br/>Least-Privilege IAM Role"]
+
+        S3[("Amazon S3 Data Lake<br/>Encryption and Access Controls")]
+        GOV["Lake Formation<br/>Analytics Governance"]
+
+        IAM["AWS IAM<br/>Least Privilege"]
+        KMS["AWS KMS<br/>Encryption Keys"]
+        SEC["AWS Secrets Manager<br/>Credential Management"]
+
+        CT["AWS CloudTrail<br/>Audit Logging"]
+        CONFIG["AWS Config<br/>Compliance Evaluation"]
+        HUB["AWS Security Hub<br/>Centralized Findings"]
+        GD["Amazon GuardDuty<br/>Threat Detection"]
+    end
+
+    OMS -->|"Authenticated HTTPS Request"| ALB
+    ALB -->|"Authorized API Request"| ECS
+    ECS -->|"Conditional Transactions"| DDB
+    DDB -.->|"Outbox Records"| PUB
+    PUB -->|"Authorized Events"| EB
+    EB -->|"Approved Rule"| SQS
+    SQS -->|"Authorized Consumption"| CON
+
+    EB -.->|"Analytics Events"| S3
+    GOV -.->|"Governed Data Access"| S3
+
+    IAM -.-> ECS
+    IAM -.-> PUB
+    IAM -.-> CON
+    KMS -.-> DDB
+    KMS -.-> S3
+    KMS -.-> SQS
+    SEC -.-> ECS
+
+    CT -.-> IAM
+    CT -.-> KMS
+    CONFIG -.-> HUB
+    GD -.-> HUB
+
+    classDef compute fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef data fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef security fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef monitoring fill:#f3e8ff,stroke:#9333ea,color:#581c87
+
+    class OMS,ALB,ECS,PUB,CON compute
+    class DDB,EB,SQS,S3,GOV data
+    class IAM,KMS,SEC security
+    class CT,CONFIG,HUB,GD monitoring
