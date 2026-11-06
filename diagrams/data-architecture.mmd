@@ -1,0 +1,71 @@
+flowchart TD
+    OMS["Order Management System"]
+    POS["Point of Sale"]
+    WMS["Warehouse Management System"]
+
+    API["Internal ALB / REST API"]
+    RES["Inventory Reservation Service<br/>ECS Fargate"]
+
+    subgraph DDB["Amazon DynamoDB — Authoritative Reservation Data"]
+        INV["Inventory Records"]
+        RSV["Reservation Records"]
+        IDEM["Idempotency Records"]
+        OUT["Transactional Outbox"]
+    end
+
+    PUB["Reliable Outbox Publisher"]
+    EB["Amazon EventBridge"]
+
+    Q1["SQS — Online Inventory View"]
+    Q2["SQS — Store Fulfillment"]
+    Q3["SQS — Analytics Ingestion"]
+
+    VIEW["Online Inventory View"]
+    FUL["Store Fulfillment Service"]
+    ING["Analytics Ingestion Consumer"]
+
+    subgraph LAKE["Amazon S3 Data Lake"]
+        BRONZE["Bronze — Raw Events"]
+        SILVER["Silver — Validated Data"]
+        GOLD["Gold — Business Aggregates"]
+    end
+
+    GLUE["AWS Glue / Data Catalog"]
+    ATHENA["Amazon Athena"]
+    BI["Business Intelligence / Reporting"]
+
+    OMS --> API
+    POS --> API
+    WMS --> API
+    API --> RES
+
+    RES -->|"Atomic conditional transaction"| INV
+    RES -->|"Same transaction"| RSV
+    RES -->|"Same transaction"| IDEM
+    RES -->|"Same transaction"| OUT
+
+    OUT --> PUB
+    PUB --> EB
+
+    EB --> Q1
+    EB --> Q2
+    EB --> Q3
+
+    Q1 --> VIEW
+    Q2 --> FUL
+    Q3 --> ING
+
+    ING --> BRONZE
+    BRONZE --> GLUE
+    GLUE --> SILVER
+    SILVER --> GOLD
+    GOLD --> ATHENA
+    ATHENA --> BI
+
+    classDef operational fill:#e3f0ff,stroke:#3478bd,color:#163b63
+    classDef events fill:#fff0d9,stroke:#c48b33,color:#62410c
+    classDef analytics fill:#e2f4e7,stroke:#43945a,color:#184a28
+
+    class OMS,POS,WMS,API,RES,INV,RSV,IDEM,OUT operational
+    class PUB,EB,Q1,Q2,Q3,VIEW,FUL events
+    class ING,BRONZE,SILVER,GOLD,GLUE,ATHENA,BI analytics
