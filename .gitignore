@@ -1,0 +1,13 @@
+
+# Terraform generated files
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/*.tfvars
+**/*.tfvars.json
+**/crash.log
+**/crash.*.log
+
+# Local Terraform backups
+terraform-backup-before-phase9-*/

@@ -1,0 +1,6 @@
+aws_region = "us-east-1"
+availability_zones = ["us-east-1a", "us-east-1b"]
+# Replace both placeholders before planning; no default container is provided.
+container_image = "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/reservation-service:IMMUTABLE_TAG"
+alb_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLACE_ME"
+enable_interface_endpoints = false
